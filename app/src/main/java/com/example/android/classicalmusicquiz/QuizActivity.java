@@ -63,8 +63,8 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
     private static final int CORRECT_ANSWER_DELAY_MILLIS = 1000;
     private static final String REMAINING_SONGS_KEY = "remaining_songs";
     private static final String TAG = QuizActivity.class.getSimpleName();
-    //    private MediaSessionCompat mMediaSession;
     private static MediaSessionCompat mMediaSession;
+    //    private MediaSessionCompat mMediaSession;
     private int[] mButtonIDs = {R.id.buttonA, R.id.buttonB, R.id.buttonC, R.id.buttonD};
     private ArrayList<Integer> mRemainingSampleIDs;
     private ArrayList<Integer> mQuestionSampleIDs;
@@ -126,6 +126,40 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         initializePlayer(Uri.parse(answerSample.getUri()));
     }
 
+    private void initiliazeMediaSession() {
+        mMediaSession = new MediaSessionCompat(this, TAG);
+        mMediaSession.setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+        );
+        mMediaSession.setMediaButtonReceiver(null);
+
+        mStateBuilder = new PlaybackStateCompat.Builder().setActions(
+                PlaybackStateCompat.ACTION_PLAY |
+                        PlaybackStateCompat.ACTION_PAUSE |
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE
+        );
+        mMediaSession.setPlaybackState(mStateBuilder.build());
+        mMediaSession.setCallback(new MySessionCallback());
+        mMediaSession.setActive(true);
+    }
+
+    private Button[] initializeButtons(ArrayList<Integer> answerSampleIDs) {
+        Button[] buttons = new Button[mButtonIDs.length];
+        for (int i = 0; i < answerSampleIDs.size(); i++) {
+            Button currentButton = (Button) findViewById(mButtonIDs[i]);
+            Sample currentSample = Sample.getSampleByID(this, answerSampleIDs.get(i));
+            buttons[i] = currentButton;
+            currentButton.setOnClickListener(this);
+            if (currentSample != null) {
+                currentButton.setText(currentSample.getComposer());
+            }
+        }
+        return buttons;
+    }
+
+
+
     private void showNotification(PlaybackStateCompat state) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
@@ -162,23 +196,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         mNoficationManager.notify(0, builder.build());
     }
 
-    private void initiliazeMediaSession() {
-        mMediaSession = new MediaSessionCompat(this, TAG);
-        mMediaSession.setFlags(
-                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-        );
-        mMediaSession.setMediaButtonReceiver(null);
 
-        mStateBuilder = new PlaybackStateCompat.Builder().setActions(
-                PlaybackStateCompat.ACTION_PLAY |
-                        PlaybackStateCompat.ACTION_PAUSE |
-                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE
-        );
-        mMediaSession.setPlaybackState(mStateBuilder.build());
-        mMediaSession.setCallback(new MySessionCallback());
-        mMediaSession.setActive(true);
-    }
 
     private void initializePlayer(Uri mediaUri) {
         if (mExoPlayer == null) {
@@ -211,19 +229,6 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
      * @param answerSampleIDs The IDs of the possible answers to the question.
      * @return The Array of initialized buttons.
      */
-    private Button[] initializeButtons(ArrayList<Integer> answerSampleIDs) {
-        Button[] buttons = new Button[mButtonIDs.length];
-        for (int i = 0; i < answerSampleIDs.size(); i++) {
-            Button currentButton = (Button) findViewById(mButtonIDs[i]);
-            Sample currentSample = Sample.getSampleByID(this, answerSampleIDs.get(i));
-            buttons[i] = currentButton;
-            currentButton.setOnClickListener(this);
-            if (currentSample != null) {
-                currentButton.setText(currentSample.getComposer());
-            }
-        }
-        return buttons;
-    }
 
 
     /**
